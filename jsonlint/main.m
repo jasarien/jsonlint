@@ -11,22 +11,32 @@
 int main(int argc, const char * argv[]) {
     @autoreleasepool {
         
-//        NSLog(@"argc: %d, argv: %@", argc, [NSString stringWithUTF8String:*argv]);
-        
         if (argc != 2)
         {
-            fprintf(stderr, "Usage: %s </path/to/json/file>\n", argv[0]);
+            fprintf(stderr, "Usage: %s </path/to/json/file> or '<jsonstring>'\n", argv[0]);
             return 0;
         }
         
-        NSString *filepath = [NSString stringWithUTF8String:argv[1]];
-        if (![[NSFileManager defaultManager] fileExistsAtPath:filepath])
+        NSData *jsonData = nil;
+        
+        NSString *firstArg = [NSString stringWithUTF8String:argv[1]];
+        if ([firstArg hasPrefix:@"["] || [firstArg hasPrefix:@"{"])
         {
-            fprintf(stderr, "%s no such file\n", argv[1]);
-            return 0;
+            // it's a json string
+            jsonData = [firstArg dataUsingEncoding:NSUTF8StringEncoding];
+        }
+        else
+        {
+            // try a file path
+            if (![[NSFileManager defaultManager] fileExistsAtPath:firstArg])
+            {
+                fprintf(stderr, "%s no such file\n", argv[1]);
+                return 0;
+            }
+            
+            jsonData = [NSData dataWithContentsOfFile:firstArg];
         }
         
-        NSData *jsonData = [NSData dataWithContentsOfFile:filepath];
         if (!jsonData)
         {
             fprintf(stderr, "Unable to read file at %s\n", argv[1]);
